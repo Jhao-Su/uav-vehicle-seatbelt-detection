@@ -1,0 +1,6 @@
+train: ../dataset/seatbelt_detection/train/images
+val: ../dataset/seatbelt_detection/valid/images
+test: ../dataset/seatbelt_detection/test/images
+
+nc: 4
+names: ['person-noseatbelt', 'person-seatbelt', 'seatbelt', 'windshield']

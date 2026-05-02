@@ -1,0 +1,6 @@
+train: ../dataset/VisDrone2019/train/images
+val: ../dataset/VisDrone2019/valid/images
+test: ../dataset/VisDrone2019/test/images
+
+nc: 10
+names: ['awning-tricycle', 'bicycle', 'bus', 'car', 'motor', 'pedestrian', 'people', 'tricycle', 'truck', 'van']
