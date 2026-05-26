@@ -88,6 +88,7 @@ def detect_single_frame(image):
         imgsz=800,  # 与训练尺寸一致
         conf=0.4,   # 人员类别分段阈值
         iou=0.8,    # 适当降低IOU阈值
+        # device=0, #有GPU时使用GPU
         device='cpu',
         classes=PERSON_CLASS_IDS + [WINDOW_CLASS_ID, SEATBELT_CLASS_ID]
     )

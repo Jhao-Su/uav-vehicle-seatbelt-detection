@@ -88,7 +88,7 @@ def detect_single_frame(image):
         imgsz=800,  # 与训练尺寸一致
         conf=0.6,   # 优化置信度阈值
         iou=0.8,    # 适当降低IOU阈值
-        # device=0,
+        # device=0, #有GPU时使用GPU
         device='cpu',
         classes=PERSON_CLASS_IDS + [WINDOW_CLASS_ID, SEATBELT_CLASS_ID]
     )
