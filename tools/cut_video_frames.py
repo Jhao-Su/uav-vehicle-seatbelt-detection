@@ -1,3 +1,21 @@
+"""
+使用说明
+-------
+本脚本用于从视频文件中逐帧提取图片并保存为 JPG 格式。
+
+使用方法：
+    1. 修改 __main__ 中的 video_file 变量为你的视频文件路径
+    2. 修改 output_directory 变量为你想要保存帧图片的目录
+    3. 运行脚本：
+       python cut_video_frames.py
+
+输出：
+    帧图片以 frame_000001.jpg, frame_000002.jpg ... 的格式保存在指定目录中。
+
+依赖：
+    opencv-python (cv2)
+"""
+
 import cv2
 import os
 

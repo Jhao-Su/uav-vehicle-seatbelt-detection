@@ -1,3 +1,27 @@
+'''
+使用说明
+-------
+本脚本用于将 PNG 图片转换为 JPG 格式，支持单文件转换和批量转换两种模式。
+
+背景：
+    PNG 图片可能包含透明通道（Alpha），而 JPG 格式不支持透明度。
+    脚本会自动将透明背景填充为白色，并转换为 RGB 模式后保存。
+
+使用方法：
+    单文件转换：
+        python png2jpg.py image.png
+        python png2jpg.py image.png output.jpg
+
+    批量转换（转换当前目录下所有 .png 文件）：
+        python png2jpg.py --batch
+
+参数说明：
+    quality: JPG 保存质量（1-100），在代码中默认为 95，可根据需要调整。
+
+依赖：
+    Pillow（PIL），安装命令：pip install Pillow
+'''
+
 import os
 import sys
 from PIL import Image
