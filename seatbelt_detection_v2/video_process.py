@@ -79,8 +79,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process video for seatbelt detection')
     parser.add_argument('--video_path', type=str, required=True, 
                         help='Path to the input video file (e.g., /home/user/video.mp4)')
-    parser.add_argument('--output_dir', type=str, default="/home/sutpc/sjh/project03/runs/track/car_inside_detection",
-                        help='Directory to save output video (default: /home/sutpc/sjh/project03/runs/track/car_inside_detection)')
+    parser.add_argument('--output_dir', type=str, required=True,
+                        help='Directory to save output video')
     parser.add_argument('--skip_frames', type=int, default=0,
                         help='Skip frames (e.g., 1 means process every 2 frames)')
     args = parser.parse_args()
