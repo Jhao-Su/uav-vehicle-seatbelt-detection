@@ -19,13 +19,53 @@
 
 ## 使用说明
 
-### 1. 安装依赖
+### 1. 环境配置
 
-运行程序前，请先安装必要的依赖：
+#### Conda 环境（推荐）
+
+使用 Conda 创建隔离的 Python 环境并安装依赖：
 
 ```bash
-pip install ultralytics
+# 创建并激活环境
+conda create -n seatbelt python=3.10 -y
+conda activate seatbelt
+
+# 安装依赖
+pip install ultralytics opencv-python numpy pyyaml Pillow
 ```
+
+#### Docker 环境
+
+项目提供了开箱即用的 Dockerfile（位于 `docker/` 目录），支持 CPU 推理和 GPU 训练两种场景。
+
+**构建镜像**
+
+```bash
+# CPU 推理镜像（轻量，仅需 CPU）
+docker build -t seatbelt:cpu --target cpu -f docker/Dockerfile .
+
+# GPU 训练 / 推理镜像（需要 NVIDIA GPU + CUDA 驱动）
+docker build -t seatbelt:gpu --target gpu -f docker/Dockerfile .
+```
+
+**使用示例**
+
+```bash
+# 单张图片检测（CPU）
+docker run --rm -v /path/to/images:/data \
+  seatbelt:cpu python seatbelt_detection_v2/seatbelt_detector.py --image_path /data/test.jpg
+
+# 视频检测（CPU）
+docker run --rm -v /path/to/videos:/data \
+  seatbelt:cpu python seatbelt_detection_v2/video_process.py \
+  --video_path /data/test.mp4 --output_dir /data/output
+
+# 模型训练（GPU，需要 --gpus all）
+docker run --gpus all --rm -v /path/to/dataset:/app/dataset \
+  seatbelt:gpu python rtdetr_seatbelt_detection_model_v2/train_v2.py
+```
+
+> **说明**：Docker 镜像已内置模型权重文件（`.pt`）。数据集和测试数据通过 `-v` 挂载使用，避免镜像体积过大。更多细节请查看 `docker/Dockerfile` 中的注释。
 
 ### 2. 路径配置
 
