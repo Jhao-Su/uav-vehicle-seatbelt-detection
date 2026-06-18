@@ -36,36 +36,57 @@ pip install ultralytics opencv-python numpy pyyaml Pillow
 
 #### Docker 环境
 
-项目提供了开箱即用的 Dockerfile（位于 `docker/` 目录），支持 CPU 推理和 GPU 训练两种场景。
-
-**构建镜像**
+项目提供了 Dockerfile（位于 `docker/` 目录），支持 CPU 推理和 GPU 训练两种方案。使用时打开 `docker/Dockerfile`，根据需要**取消对应方案的注释、注释掉另一方案**即可：
 
 ```bash
-# CPU 推理镜像（轻量，仅需 CPU）
-docker build -t seatbelt:cpu --target cpu -f docker/Dockerfile .
-
-# GPU 训练 / 推理镜像（需要 NVIDIA GPU + CUDA 驱动）
-docker build -t seatbelt:gpu --target gpu -f docker/Dockerfile .
+# 当前默认启用方案一（CPU），如需 GPU 则：
+#   1. 注释掉方案一的 FROM / ENV / RUN 等行
+#   2. 取消方案二各行的注释
+#   3. 构建并运行
+docker build -t seatbelt -f docker/Dockerfile .
 ```
 
 **使用示例**
 
 ```bash
-# 单张图片检测（CPU）
+# 单张图片检测
 docker run --rm -v /path/to/images:/data \
-  seatbelt:cpu python seatbelt_detection_v2/seatbelt_detector.py --image_path /data/test.jpg
+  seatbelt python seatbelt_detection_v2/seatbelt_detector.py --image_path /data/test.jpg
 
-# 视频检测（CPU）
+# 视频检测
 docker run --rm -v /path/to/videos:/data \
-  seatbelt:cpu python seatbelt_detection_v2/video_process.py \
+  seatbelt python seatbelt_detection_v2/video_process.py \
   --video_path /data/test.mp4 --output_dir /data/output
 
-# 模型训练（GPU，需要 --gpus all）
+# 模型训练（需先切换为 GPU 方案）
 docker run --gpus all --rm -v /path/to/dataset:/app/dataset \
-  seatbelt:gpu python rtdetr_seatbelt_detection_model_v2/train_v2.py
+  seatbelt python rtdetr_seatbelt_detection_model_v2/train_v2.py
 ```
 
-> **说明**：Docker 镜像已内置模型权重文件（`.pt`）。数据集和测试数据通过 `-v` 挂载使用，避免镜像体积过大。更多细节请查看 `docker/Dockerfile` 中的注释。
+> **注意**：Docker 镜像已内置模型权重文件（`.pt`）。数据集和测试数据通过 `-v` 挂载使用，避免镜像体积过大。
+>
+> **GPU 方案说明**：由于本项目开发条件限制，Dockerfile 的 GPU 方案暂未经实际测试。如需 GPU 训练或推理，建议优先使用 Conda 环境部署。欢迎有条件的使用者测试并反馈。
+
+#### CPU / GPU 切换
+
+各程序中使用 `device='cpu'` 或 `device=0` 控制推理/训练设备。运行前根据需要注释掉不需要的行即可：
+
+```python
+# CPU 推理
+device='cpu',
+
+# GPU 推理（取消注释即可）
+# device=0,
+```
+
+涉及的文件：
+
+| 文件 | 所在行附近 |
+|------|-----------|
+| `seatbelt_detection_v1/seatbelt_detector.py` | `model.predict(...)` 调用中 |
+| `seatbelt_detection_v2/seatbelt_detector.py` | `model.predict(...)` 调用中 |
+| `rtdetr_seatbelt_detection_model_v1/train_v1.py` | `model.train(...)` 调用中 |
+| `rtdetr_seatbelt_detection_model_v2/train_v2.py` | `model.train(...)` 调用中 |
 
 ### 2. 路径配置
 
