@@ -27,7 +27,7 @@
 
 ```bash
 # 创建并激活环境
-conda create -n seatbelt python=3.10 -y
+conda create -n seatbelt python=3.8 -y
 conda activate seatbelt
 
 # 安装依赖
@@ -88,11 +88,75 @@ device='cpu',
 | `rtdetr_seatbelt_detection_model_v1/train_v1.py` | `model.train(...)` 调用中 |
 | `rtdetr_seatbelt_detection_model_v2/train_v2.py` | `model.train(...)` 调用中 |
 
-### 2. 路径配置
+### 2. 检测程序使用
+
+项目提供两个版本的检测程序（`seatbelt_detection_v1` 和 `seatbelt_detection_v2`），支持以下三种使用方式：
+
+#### 方式一：视频流推理
+
+直接运行各版本目录下的 `video_process.py`，对视频文件进行逐帧安全带检测：
+
+```bash
+# v1 视频推理
+python seatbelt_detection_v1/video_process.py \
+  --video_path /path/to/input.mp4 \
+  --output_dir /path/to/output
+
+# v2 视频推理
+python seatbelt_detection_v2/video_process.py \
+  --video_path /path/to/input.mp4 \
+  --output_dir /path/to/output
+```
+
+可选参数 `--skip_frames N` 用于跳帧处理（`0` 表示不跳过，`1` 表示每 2 帧处理 1 帧）。
+
+#### 方式二：单帧图片推理
+
+各版本的 `seatbelt_detector.py` 均留有 `main` 入口，可直接对单张图片进行推理：
+
+```bash
+# v1 单帧推理
+python seatbelt_detection_v1/seatbelt_detector.py --image_path /path/to/image.jpg
+
+# v2 单帧推理
+python seatbelt_detection_v2/seatbelt_detector.py --image_path /path/to/image.jpg
+```
+
+结果图片将保存在原图同目录下，文件名为 `原文件名_result.jpg`。
+
+#### 方式三：作为算法模块调用
+
+如果需要在无人机巡检系统或其他项目中集成使用，可直接导入核心检测函数：
+
+```python
+# 导入 v1 检测函数
+from seatbelt_detection_v1.seatbelt_detector import detect_single_frame
+
+# 导入 v2 检测函数
+from seatbelt_detection_v2.seatbelt_detector import detect_single_frame
+
+# 调用示例
+import cv2
+
+image = cv2.imread("/path/to/image.jpg")
+result = detect_single_frame(image)
+
+# result['frame']    — 绘制了检测框的结果图像 (numpy array)
+# result['results']  — 检测结果列表，每项包含:
+#   - bbox: 人员边界框 [x1, y1, x2, y2]
+#   - cls:  类别 (0=未系安全带, 1=已系安全带)
+#   - id:   目标 ID
+#   - is_inside: 是否在车窗内
+#   - conf: 置信度
+```
+
+> **注意**：`seatbelt_detector.py` 中的模型路径使用相对路径加载（`../rtdetr_seatbelt_detection_model_v2/seatbelt_detection_train2/weights/best.pt`），作为模块导入时请确保工作目录正确，或根据实际部署路径修改模型加载路径。
+
+### 3. 路径配置
 
 运行程序前，请检查并确认所有路径配置正确。如果程序提示路径错误，请根据实际文件结构在代码中修正路径。
 
-### 3. 模型权重替换
+### 4. 模型权重替换
 
 模型训练程序中使用的原始权重可以替换为 `rtdetr_model_zoo/` 目录中的其他权重文件：
 - `.pt` 文件为预训练模型权重
@@ -102,7 +166,7 @@ device='cpu',
 
 **注意**：由于文件大小限制，`rtdetr-x.pt` 权重文件未包含在本仓库中。`rtdetr_model_zoo/` 目录仅提供 `rtdetr-x` 的 yaml 格式架构文件。如果需要使用其 `.pt` 实体权重进行推理或训练，请访问 [Ultralytics 官方网站](https://github.com/ultralytics/ultralytics) 下载。
 
-### 4. 数据集配置
+### 5. 数据集配置
 
 #### 官方数据集
 如果使用官方数据集（如 COCO2017、VisDrone2019），请按照各训练程序中的注释进行路径和配置替换。
@@ -113,7 +177,7 @@ device='cpu',
 - 存放位置：`dataset/` 目录下的对应子目录
 - 配置文件：参考现有 `.yaml` 文件格式编写
 
-### 5. 辅助工具
+### 6. 辅助工具
 
 `tools/` 目录下提供了一系列辅助脚本，用于数据预处理和格式转换等操作。使用前请先打开对应脚本，参照脚本开头的 `''' '''` 使用说明进行配置和运行。
 
