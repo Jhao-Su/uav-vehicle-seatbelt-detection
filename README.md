@@ -126,31 +126,25 @@ python seatbelt_detection_v2/seatbelt_detector.py --image_path /path/to/image.jp
 
 #### 方式三：作为算法模块调用
 
-如果需要在无人机巡检系统或其他项目中集成使用，可直接导入核心检测函数：
+如果需要在无人机巡检系统或其他项目中集成使用，导入 `api` 模块即可：
 
 ```python
-# 导入 v1 检测函数
-from seatbelt_detection_v1.seatbelt_detector import detect_single_frame
+# v1
+from seatbelt_detection_v1.api import detect_single_frame, process_video
 
-# 导入 v2 检测函数
-from seatbelt_detection_v2.seatbelt_detector import detect_single_frame
+# v2（分段置信度策略）
+from seatbelt_detection_v2.api import detect_single_frame, process_video
 
-# 调用示例
+# 单帧检测
 import cv2
-
 image = cv2.imread("/path/to/image.jpg")
 result = detect_single_frame(image)
+# result['frame']    — 结果图像 (numpy array)
+# result['results']  — 检测框列表，每项包含 bbox / cls / id / is_inside / conf
 
-# result['frame']    — 绘制了检测框的结果图像 (numpy array)
-# result['results']  — 检测结果列表，每项包含:
-#   - bbox: 人员边界框 [x1, y1, x2, y2]
-#   - cls:  类别 (0=未系安全带, 1=已系安全带)
-#   - id:   目标 ID
-#   - is_inside: 是否在车窗内
-#   - conf: 置信度
+# 视频处理
+process_video("/path/to/video.mp4", "/path/to/output", skip_frames=0)
 ```
-
-> **注意**：`seatbelt_detector.py` 中的模型路径使用相对路径加载（`../rtdetr_seatbelt_detection_model_v2/seatbelt_detection_train2/weights/best.pt`），作为模块导入时请确保工作目录正确，或根据实际部署路径修改模型加载路径。
 
 ### 3. 路径配置
 
