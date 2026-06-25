@@ -50,17 +50,23 @@ docker build -t seatbelt -f docker/Dockerfile .
 
 ```bash
 # 单张图片检测
-docker run --rm -v /path/to/images:/data \
-  seatbelt python seatbelt_detection_v2/seatbelt_detector.py --image_path /data/test.jpg
+docker run --rm -v /path/to/images:/data seatbelt python -c "
+from seatbelt_detection_v2.detector import SeatbeltDetector; import cv2
+d = SeatbeltDetector({}); r = d.recognize_image(cv2.imread('/data/test.jpg'))
+cv2.imwrite('/data/test_result.jpg', r['annotated_image']); d.clean()"
 
 # 视频检测
-docker run --rm -v /path/to/videos:/data \
-  seatbelt python seatbelt_detection_v2/video_process.py \
-  --video_path /data/test.mp4 --output_dir /data/output
+docker run --rm -v /path/to/videos:/data seatbelt python -c "
+from seatbelt_detection_v2.detector import SeatbeltDetector
+d = SeatbeltDetector({})
+d.process_video('/data/test.mp4', '/data/output')
+d.clean()"
 
 # 模型训练（需先切换为 GPU 方案）
 docker run --gpus all --rm -v /path/to/dataset:/app/dataset \
-  seatbelt python rtdetr_seatbelt_detection_model_v2/train_v2.py
+  seatbelt python rtdetr_seatbelt_detection_model_v2/trainer.py \
+  --data /data/dataset/SeatbeltDetection/seatbelt_detection_data.yaml \
+  --project /data/output
 ```
 
 > **注意**：Docker 镜像已内置模型权重文件（`.pt`）。数据集和测试数据通过 `-v` 挂载使用，避免镜像体积过大。
@@ -83,68 +89,92 @@ device='cpu',
 
 | 文件 | 所在行附近 |
 |------|-----------|
-| `seatbelt_detection_v1/seatbelt_detector.py` | `model.predict(...)` 调用中 |
-| `seatbelt_detection_v2/seatbelt_detector.py` | `model.predict(...)` 调用中 |
-| `rtdetr_seatbelt_detection_model_v1/train_v1.py` | `model.train(...)` 调用中 |
-| `rtdetr_seatbelt_detection_model_v2/train_v2.py` | `model.train(...)` 调用中 |
+| `seatbelt_detection_v1/detector.py` | `config["device"]` 配置项 |
+| `seatbelt_detection_v2/detector.py` | `config["device"]` 配置项 |
+| `rtdetr_seatbelt_detection_model_v1/trainer.py` | `model.train(...)` 调用中 |
+| `rtdetr_seatbelt_detection_model_v2/trainer.py` | `model.train(...)` 调用中 |
 
 ### 2. 检测程序使用
 
-项目提供两个版本的检测程序（`seatbelt_detection_v1` 和 `seatbelt_detection_v2`），支持以下三种使用方式：
+每个版本的目录下仅有一个入口文件 `detector.py`，基于 `SeatbeltDetector` 类提供统一的单帧检测和视频处理能力。
 
-#### 方式一：视频流推理
-
-直接运行各版本目录下的 `video_process.py`，对视频文件进行逐帧安全带检测：
-
-```bash
-# v1 视频推理
-python seatbelt_detection_v1/video_process.py \
-  --video_path /path/to/input.mp4 \
-  --output_dir /path/to/output
-
-# v2 视频推理
-python seatbelt_detection_v2/video_process.py \
-  --video_path /path/to/input.mp4 \
-  --output_dir /path/to/output
-```
-
-可选参数 `--skip_frames N` 用于跳帧处理（`0` 表示不跳过，`1` 表示每 2 帧处理 1 帧）。
-
-#### 方式二：单帧图片推理
-
-各版本的 `seatbelt_detector.py` 均留有 `main` 入口，可直接对单张图片进行推理：
-
-```bash
-# v1 单帧推理
-python seatbelt_detection_v1/seatbelt_detector.py --image_path /path/to/image.jpg
-
-# v2 单帧推理
-python seatbelt_detection_v2/seatbelt_detector.py --image_path /path/to/image.jpg
-```
-
-结果图片将保存在原图同目录下，文件名为 `原文件名_result.jpg`。
-
-#### 方式三：作为算法模块调用
-
-如果需要在无人机巡检系统或其他项目中集成使用，导入 `api` 模块即可：
+#### 单帧图片检测
 
 ```python
-# v1
-from seatbelt_detection_v1.api import detect_single_frame, process_video
-
-# v2（分段置信度策略）
-from seatbelt_detection_v2.api import detect_single_frame, process_video
-
-# 单帧检测
 import cv2
-image = cv2.imread("/path/to/image.jpg")
-result = detect_single_frame(image)
-# result['frame']    — 结果图像 (numpy array)
-# result['results']  — 检测框列表，每项包含 bbox / cls / id / is_inside / conf
+from seatbelt_detection_v2.detector import SeatbeltDetector
 
-# 视频处理
-process_video("/path/to/video.mp4", "/path/to/output", skip_frames=0)
+detector = SeatbeltDetector({})                       # 使用默认模型路径
+image = cv2.imread("/path/to/image.jpg")
+result = detector.recognize_image(image)
+cv2.imwrite("/path/to/output.jpg", result["annotated_image"])
+detector.clean()
 ```
+
+返回字段详见 [接口说明](#接口说明)。v1 与 v2 接口完全一致，替换 import 路径即可切换。
+
+#### 视频处理
+
+```python
+from seatbelt_detection_v2.detector import SeatbeltDetector
+
+detector = SeatbeltDetector({})
+detector.process_video("/path/to/input.mp4", "/path/to/output.mp4", skip_frames=0)
+detector.clean()
+```
+
+#### 系统集成
+
+```python
+from seatbelt_detection_v2.detector import SeatbeltDetector
+
+config = {
+    "model_path": "/opt/models/seatbelt/best.pt",  # 部署时使用绝对路径
+    "device": 0,                                    # GPU 推理
+    "conf_threshold": 0.4,
+}
+detector = SeatbeltDetector(config)
+result = detector.recognize_image(image)            # result 为结构化 dict
+detector.clean()
+```
+
+#### 接口说明
+
+`recognize_image()` 返回：
+
+```python
+{
+    "annotated_image": np.ndarray,   # 带标注框的结果图像
+    "vehicles": [{                   # 按车辆分组
+        "vehicle_id": 0,
+        "window_bbox": [x1, y1, x2, y2],
+        "window_confidence": 0.917,
+        "persons": [{
+            "bbox": [x, y, w, h],             # xywh 格式
+            "confidence": 0.911,
+            "class_name": "person-noseatbelt", # "person-noseatbelt" / "person-seatbelt"
+            "object_id": 1,
+            "in_window": True,
+        }],
+    }],
+    "image_info": {"width": 1920, "height": 1080},
+    "has_target": True,
+    "vehicle_count": 1,
+}
+```
+
+`process_video()` 返回：
+
+```python
+{
+    "status": "success",
+    "output_video_path": "/path/to/output.mp4",
+    "total_frames": 300,
+    "processed_frames": 300,
+}
+```
+
+> **v1 与 v2 的区别**：v1 对所有人员统一进行车窗判位和安全带 IOU 二次验证（`conf_threshold` 默认 0.6）；v2 采用分段置信度策略——高置信度（>0.7）直接输出、中置信度（0.4-0.7）经二次验证后输出。调用方式完全相同，替换 import 中 `v1` / `v2` 即可切换。
 
 ### 3. 路径配置
 
