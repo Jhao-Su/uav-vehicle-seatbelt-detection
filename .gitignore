@@ -8,6 +8,12 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Backup
+backup/
+
+#Test
+testimgs/
+
 # OS
 .DS_Store
 Thumbs.db

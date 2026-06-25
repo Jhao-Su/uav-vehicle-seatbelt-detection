@@ -1,6 +1,7 @@
 # Git
 .git/
 .gitignore
+.gitattributes
 
 # VS Code
 .vscode/
@@ -16,13 +17,16 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# 备份文件（旧版脚本，不入镜像）
+backup/
+
+# 测试图片
+testimgs/
+
+# 数据集（体积大，运行时挂载）
+dataset/
+
 # 中间结果（体积大，不入镜像）
 detetion_test_results/
 rtdetr_visdrone_train_val/
 rtdetr_coco_val/
-
-# 数据集（体积大，建议运行时挂载）
-dataset/
-
-# 测试图片
-testimgs/
