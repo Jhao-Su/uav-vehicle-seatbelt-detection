@@ -100,6 +100,8 @@ device='cpu',
 
 #### 单帧图片检测
 
+对单张图片进行推理，返回标注后的图像及各车辆内人员的结构化检测结果。
+
 ```python
 import cv2
 from seatbelt_detection_v2.detector import SeatbeltDetector
@@ -115,6 +117,8 @@ detector.clean()
 
 #### 视频处理
 
+对视频文件逐帧检测，输出带标注框的结果视频，支持跳帧加速。
+
 ```python
 from seatbelt_detection_v2.detector import SeatbeltDetector
 
@@ -124,6 +128,8 @@ detector.clean()
 ```
 
 #### 系统集成
+
+作为算法模块嵌入无人机巡检等外部系统，通过 config dict 配置模型路径、设备、阈值等所有参数。
 
 ```python
 from seatbelt_detection_v2.detector import SeatbeltDetector
@@ -140,7 +146,7 @@ detector.clean()
 
 #### 接口说明
 
-`recognize_image()` 返回：
+`recognize_image()` 与 `process_video()` 的返回值结构如下。
 
 ```python
 {
